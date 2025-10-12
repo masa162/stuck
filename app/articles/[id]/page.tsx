@@ -12,6 +12,7 @@ export const runtime = 'edge';
 
 export default function ArticlePage() {
   const params = useParams();
+  const router = useRouter();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +34,28 @@ export default function ArticlePage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!article) return;
+
+    if (!confirm("この記事をゴミ箱に移動しますか？")) return;
+
+    try {
+      const response = await fetch(`/api/articles/${article.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        alert("記事をゴミ箱に移動しました");
+        router.push("/");
+      } else {
+        alert("削除に失敗しました");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("削除に失敗しました");
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -47,11 +70,19 @@ export default function ArticlePage() {
               <div className="mb-6">
                 <div className="flex justify-between items-start mb-4">
                   <h1 className="text-3xl font-bold">{article.title}</h1>
-                  <Link href={`/articles/${article.id}/edit`}>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                      編集
+                  <div className="flex gap-2">
+                    <Link href={`/articles/${article.id}/edit`}>
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        編集
+                      </button>
+                    </Link>
+                    <button
+                      onClick={handleDelete}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                      削除
                     </button>
-                  </Link>
+                  </div>
                 </div>
                 {article.memo && (
                   <p className="text-sm text-gray-500 mb-2">{article.memo}</p>
