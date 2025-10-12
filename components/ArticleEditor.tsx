@@ -60,7 +60,7 @@ export default function ArticleEditor({
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { article: { id: number } };
         alert("保存しました");
         router.push(`/articles/${data.article.id}`);
       } else {

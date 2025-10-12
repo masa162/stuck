@@ -22,7 +22,7 @@ export default function EditArticlePage() {
   const fetchArticle = async (id: string) => {
     try {
       const response = await fetch(`/api/articles/${id}`);
-      const data = await response.json();
+      const data = await response.json() as { article: Article };
       setArticle(data.article);
     } catch (error) {
       console.error("Failed to fetch article:", error);

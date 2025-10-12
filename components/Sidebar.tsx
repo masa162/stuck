@@ -16,7 +16,7 @@ export default function Sidebar() {
   const fetchArticles = async () => {
     try {
       const response = await fetch("/api/articles");
-      const data = await response.json();
+      const data = await response.json() as { articles: Article[] };
       setArticles(data.articles || []);
     } catch (error) {
       console.error("Failed to fetch articles:", error);
