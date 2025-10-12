@@ -56,7 +56,7 @@ export async function PUT(
     const { id: idStr } = await params;
     const id = parseInt(idStr);
     const env = process.env as unknown as Env;
-    const body = await request.json();
+    const body = await request.json() as { title?: string; content?: string; memo?: string; tags?: string[] };
     const { title, content, memo, tags } = body;
 
     if (!env.DB) {

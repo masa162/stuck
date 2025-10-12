@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const env = process.env as unknown as Env;
-    const body = await request.json();
+    const body = await request.json() as { title: string; content: string; memo?: string; tags?: string[] };
     const { title, content, memo, tags } = body;
 
     if (!title || !content) {
