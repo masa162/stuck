@@ -15,7 +15,7 @@ export async function getArticles(db: D1Database): Promise<Article[]> {
     )
     .all();
 
-  const articles = results as Article[];
+  const articles = results as unknown as Article[];
 
   // 各記事のタグを取得
   for (const article of articles) {
@@ -29,7 +29,7 @@ export async function getArticles(db: D1Database): Promise<Article[]> {
       )
       .bind(article.id)
       .all();
-    article.tags = tags as Tag[];
+    article.tags = tags as unknown as Tag[];
   }
 
   return articles;
@@ -46,7 +46,7 @@ export async function getArticleById(
 
   if (results.length === 0) return null;
 
-  const article = results[0] as Article;
+  const article = results[0] as unknown as Article;
 
   // タグを取得
   const { results: tags } = await db
@@ -60,7 +60,7 @@ export async function getArticleById(
     .bind(id)
     .all();
 
-  article.tags = tags as Tag[];
+  article.tags = tags as unknown as Tag[];
 
   return article;
 }
@@ -92,7 +92,7 @@ export async function createArticle(
 
       let tagId: number;
       if (existingTags.length > 0) {
-        tagId = (existingTags[0] as { id: number }).id;
+        tagId = (existingTags[0] as unknown as { id: number }).id;
       } else {
         // 新しいタグを作成
         const tagResult = await db
@@ -152,7 +152,7 @@ export async function updateArticle(
 
       let tagId: number;
       if (existingTags.length > 0) {
-        tagId = (existingTags[0] as { id: number }).id;
+        tagId = (existingTags[0] as unknown as { id: number }).id;
       } else {
         const tagResult = await db
           .prepare("INSERT INTO tags (name) VALUES (?)")
