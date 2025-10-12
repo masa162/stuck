@@ -4,4 +4,4 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "stuck-db"
-database_id = "your-database-id-here"
+database_id = "89ed51c8-0869-4192-af68-48fa1c601cc3"

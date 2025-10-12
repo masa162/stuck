@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getArticleById, updateArticle, deleteArticle, Env } from "@/lib/db/d1";
 
 export const runtime = 'edge';
 
@@ -10,20 +11,33 @@ export async function GET(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
+    const env = process.env as unknown as Env;
 
-    // 開発中はモックデータを返す
-    const mockArticle = {
-      id,
-      title: `サンプル記事${id}`,
-      content: `# サンプル記事${id}\n\n## セクション1\n\nこれはサンプルの記事内容です。\n\n## セクション2\n\n詳細な内容がここに入ります。`,
-      memo: `メモ${id}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      deleted_at: null,
-      tags: [{ id: 1, name: "サンプル", created_at: new Date().toISOString() }],
-    };
+    if (!env.DB) {
+      // DBが利用できない場合はモックデータを返す
+      const mockArticle = {
+        id,
+        title: `サンプル記事${id}`,
+        content: `# サンプル記事${id}\n\n## セクション1\n\nこれはサンプルの記事内容です。\n\n## セクション2\n\n詳細な内容がここに入ります。`,
+        memo: `メモ${id}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        tags: [{ id: 1, name: "サンプル", created_at: new Date().toISOString() }],
+      };
+      return NextResponse.json({ article: mockArticle });
+    }
 
-    return NextResponse.json({ article: mockArticle });
+    const article = await getArticleById(env.DB, id);
+
+    if (!article) {
+      return NextResponse.json(
+        { error: "Article not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ article });
   } catch (error) {
     console.error("Error fetching article:", error);
     return NextResponse.json(
@@ -41,22 +55,35 @@ export async function PUT(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
+    const env = process.env as unknown as Env;
     const body = await request.json();
     const { title, content, memo, tags } = body;
 
-    // 開発中はモックレスポンスを返す
-    const updatedArticle = {
-      id,
-      title: title || `サンプル記事${id}`,
-      content: content || "",
-      memo: memo || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      deleted_at: null,
-      tags: tags || [],
-    };
+    if (!env.DB) {
+      // DBが利用できない場合はモックレスポンスを返す
+      const updatedArticle = {
+        id,
+        title: title || `サンプル記事${id}`,
+        content: content || "",
+        memo: memo || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        tags: tags || [],
+      };
+      return NextResponse.json({ article: updatedArticle });
+    }
 
-    return NextResponse.json({ article: updatedArticle });
+    const article = await updateArticle(env.DB, id, { title, content, memo, tags });
+
+    if (!article) {
+      return NextResponse.json(
+        { error: "Article not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ article });
   } catch (error) {
     console.error("Error updating article:", error);
     return NextResponse.json(
@@ -74,8 +101,18 @@ export async function DELETE(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
+    const env = process.env as unknown as Env;
 
-    // 開発中はモックレスポンスを返す
+    if (!env.DB) {
+      // DBが利用できない場合はモックレスポンスを返す
+      return NextResponse.json({
+        success: true,
+        message: `Article ${id} moved to trash`
+      });
+    }
+
+    await deleteArticle(env.DB, id);
+
     return NextResponse.json({
       success: true,
       message: `Article ${id} moved to trash`
