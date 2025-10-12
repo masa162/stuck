@@ -6,6 +6,8 @@ import Sidebar from "@/components/Sidebar";
 import ArticleEditor from "@/components/ArticleEditor";
 import { Article } from "@/lib/db/types";
 
+export const runtime = 'edge';
+
 export default function EditArticlePage() {
   const params = useParams();
   const [article, setArticle] = useState<Article | null>(null);

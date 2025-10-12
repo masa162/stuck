@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = 'edge';
+
 // GET /api/articles/:id - 記事詳細取得
 export async function GET(
   request: NextRequest,

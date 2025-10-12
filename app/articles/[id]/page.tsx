@@ -8,6 +8,8 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import TableOfContents from "@/components/TableOfContents";
 import { Article } from "@/lib/db/types";
 
+export const runtime = 'edge';
+
 export default function ArticlePage() {
   const params = useParams();
   const [article, setArticle] = useState<Article | null>(null);
