@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 // GET /api/articles/:id - 記事詳細取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
 
     // 開発中はモックデータを返す
     const mockArticle = {
@@ -33,10 +34,11 @@ export async function GET(
 // PUT /api/articles/:id - 記事更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
     const body = await request.json();
     const { title, content, memo, tags } = body;
 
@@ -65,10 +67,11 @@ export async function PUT(
 // DELETE /api/articles/:id - 記事削除（ゴミ箱へ移動）
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
 
     // 開発中はモックレスポンスを返す
     return NextResponse.json({
