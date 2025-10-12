@@ -56,6 +56,40 @@ export default function ArticlePage() {
     }
   };
 
+  const handleExportMarkdown = () => {
+    if (!article) return;
+
+    // フロントマターを生成
+    const frontmatter = [
+      "---",
+      `title: "${article.title}"`,
+      article.tags && article.tags.length > 0
+        ? `tags: [${article.tags.map((t) => `"${t.name}"`).join(", ")}]`
+        : "",
+      article.memo ? `memo: "${article.memo}"` : "",
+      `created_at: "${article.created_at}"`,
+      `updated_at: "${article.updated_at}"`,
+      "---",
+      "",
+    ]
+      .filter((line) => line !== "")
+      .join("\n");
+
+    // Markdownコンテンツを結合
+    const markdownContent = `${frontmatter}${article.content}`;
+
+    // Blobを作成してダウンロード
+    const blob = new Blob([markdownContent], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${article.title.replace(/[/\\?%*:|"<>]/g, "-")}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -71,6 +105,12 @@ export default function ArticlePage() {
                 <div className="flex justify-between items-start mb-4">
                   <h1 className="text-3xl font-bold">{article.title}</h1>
                   <div className="flex gap-2">
+                    <button
+                      onClick={handleExportMarkdown}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      MD出力
+                    </button>
                     <Link href={`/articles/${article.id}/edit`}>
                       <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                         編集
