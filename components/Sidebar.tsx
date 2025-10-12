@@ -8,6 +8,7 @@ import { Article } from "@/lib/db/types";
 export default function Sidebar() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -23,11 +24,19 @@ export default function Sidebar() {
     }
   };
 
-  const filteredArticles = articles.filter(
-    (article) =>
+  const filteredArticles = articles.filter((article) => {
+    // 検索クエリでフィルタ
+    const matchesSearch =
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      article.content.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // タグでフィルタ
+    const matchesTag =
+      selectedTagId === null ||
+      (article.tags?.some((tag) => tag.id === selectedTagId) ?? false);
+
+    return matchesSearch && matchesTag;
+  });
 
   return (
     <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col">
@@ -37,9 +46,9 @@ export default function Sidebar() {
           <Image
             src="/images/stuck_logo.webp"
             alt="stuck - AI Knowledge Hub"
-            width={200}
-            height={200}
-            className="w-full h-auto"
+            width={110}
+            height={110}
+            className="w-full h-auto max-w-[110px] mx-auto"
             priority
           />
         </Link>
@@ -74,7 +83,14 @@ export default function Sidebar() {
       <div className="p-4 border-b border-gray-700">
         <h3 className="text-sm font-semibold mb-2 text-gray-400">タグ</h3>
         <div className="space-y-1">
-          <div className="text-sm hover:bg-gray-800 px-2 py-1 rounded cursor-pointer">
+          <div
+            onClick={() => setSelectedTagId(null)}
+            className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
+              selectedTagId === null
+                ? "bg-blue-600 text-white"
+                : "hover:bg-gray-800"
+            }`}
+          >
             すべて
           </div>
           {articles
@@ -85,7 +101,12 @@ export default function Sidebar() {
             .map((tag) => (
               <div
                 key={tag.id}
-                className="text-sm hover:bg-gray-800 px-2 py-1 rounded cursor-pointer"
+                onClick={() => setSelectedTagId(tag.id)}
+                className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
+                  selectedTagId === tag.id
+                    ? "bg-blue-600 text-white"
+                    : "hover:bg-gray-800"
+                }`}
               >
                 {tag.name}
               </div>

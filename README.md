@@ -18,9 +18,11 @@ AIとのチャット履歴、壁打ち内容、収集した情報の整理・閲
 - ✅ 記事作成・編集
 - ✅ クライアントサイド検索
 - ✅ タグ管理
-- 🚧 記事削除（ゴミ箱）
-- 🚧 Markdown出力
-- 🚧 Basic認証
+- ✅ タグフィルター機能
+- ✅ 記事削除（ゴミ箱）
+- ✅ ゴミ箱から記事復元
+- ✅ Markdown出力
+- ✅ Basic認証
 
 ## ローカル開発
 
@@ -28,10 +30,15 @@ AIとのチャット履歴、壁打ち内容、収集した情報の整理・閲
 # 依存関係のインストール
 npm install
 
+# 環境変数を設定
+cp .env.local.example .env.local
+# .env.localでBasic認証の設定を編集
+
 # 開発サーバー起動
 npm run dev
 
 # http://localhost:3000 でアクセス
+# Basic認証: デフォルトはユーザー名 admin / パスワード password
 ```
 
 ## Cloudflare Pagesへのデプロイ
@@ -69,6 +76,16 @@ npx wrangler d1 execute stuck-db --file=./schema.sql
    - Variable name: `DB`
    - D1 database: `stuck-db`
 3. 保存して再デプロイ
+
+### Basic認証の設定
+
+Cloudflare Dashboard → Pages → stuck → Settings → Environment variables
+
+以下の環境変数を追加:
+- `BASIC_AUTH_USER`: Basic認証のユーザー名
+- `BASIC_AUTH_PASSWORD`: Basic認証のパスワード
+
+**Production** と **Preview** 環境で設定してください。
 
 ## ライセンス
 
