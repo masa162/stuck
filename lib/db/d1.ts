@@ -182,3 +182,46 @@ export async function deleteArticle(
 
   return true;
 }
+
+export async function getTrashedArticles(db: D1Database): Promise<Article[]> {
+  const { results } = await db
+    .prepare(
+      `
+      SELECT * FROM articles
+      WHERE deleted_at IS NOT NULL
+      ORDER BY deleted_at DESC
+    `
+    )
+    .all();
+
+  const articles = results as unknown as Article[];
+
+  // 各記事のタグを取得
+  for (const article of articles) {
+    const { results: tags } = await db
+      .prepare(
+        `
+        SELECT t.* FROM tags t
+        INNER JOIN article_tags at ON t.id = at.tag_id
+        WHERE at.article_id = ?
+      `
+      )
+      .bind(article.id)
+      .all();
+    article.tags = tags as unknown as Tag[];
+  }
+
+  return articles;
+}
+
+export async function restoreArticle(
+  db: D1Database,
+  id: number
+): Promise<boolean> {
+  await db
+    .prepare("UPDATE articles SET deleted_at = NULL WHERE id = ?")
+    .bind(id)
+    .run();
+
+  return true;
+}

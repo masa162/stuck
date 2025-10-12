@@ -59,8 +59,13 @@ export default function Sidebar() {
       {/* 新規記事作成ボタン */}
       <div className="p-4 border-b border-gray-700">
         <Link href="/articles/new">
-          <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium transition-colors">
+          <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium transition-colors mb-2">
             新規記事作成
+          </button>
+        </Link>
+        <Link href="/trash">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm">
+            ゴミ箱
           </button>
         </Link>
       </div>
