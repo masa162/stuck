@@ -38,3 +38,11 @@ topの画像当初の200sqだと、大きいとかんじました。
 https://img.be2nd.com/itsf10vy  
 
 どのように記述すればいいでしょうか？
+
+記事一覧のページを作ります、
+テーブル形式でメタデータを表示します
+各カラムでソートできる
+投稿日時でフィルタリングして、絞り込みができる
+
+     BASIC_AUTH_USER=admin
+     BASIC_AUTH_PASSWORD=your_secure_password_here

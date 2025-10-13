@@ -8,7 +8,7 @@ import { Article } from "@/lib/db/types";
 
 export const runtime = 'edge';
 
-type SortColumn = "title" | "created_at" | "updated_at";
+type SortColumn = "title" | "created_at" | "updated_at" | "memo";
 type SortDirection = "asc" | "desc";
 
 export default function ArticlesListPage() {
@@ -19,6 +19,8 @@ export default function ArticlesListPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchArticles();
@@ -80,6 +82,10 @@ export default function ArticlesListPage() {
           aValue = a.title.toLowerCase();
           bValue = b.title.toLowerCase();
           break;
+        case "memo":
+          aValue = (a.memo || "").toLowerCase();
+          bValue = (b.memo || "").toLowerCase();
+          break;
         case "created_at":
           aValue = new Date(a.created_at).getTime();
           bValue = new Date(b.created_at).getTime();
@@ -97,6 +103,53 @@ export default function ArticlesListPage() {
       return 0;
     });
 
+  const handleCheckboxChange = (id: number) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredAndSortedArticles.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAndSortedArticles.map((a) => a.id)));
+    }
+  };
+
+  const handleMoveToTrash = async () => {
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`選択した${selectedIds.size}件の記事をゴミ箱に移動しますか?`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const promises = Array.from(selectedIds).map((id) =>
+        fetch(`/api/articles/${id}`, {
+          method: "DELETE",
+        })
+      );
+      await Promise.all(promises);
+
+      // 記事リストを再取得
+      await fetchArticles();
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error("Failed to delete articles:", error);
+      alert("記事の削除に失敗しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -105,8 +158,19 @@ export default function ArticlesListPage() {
         <div className="max-w-7xl mx-auto p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">記事一覧</h1>
-            <div className="text-sm text-gray-500">
-              {filteredAndSortedArticles.length}件 / 全{articles.length}件
+            <div className="flex items-center gap-4">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={handleMoveToTrash}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 text-sm"
+                >
+                  {deleting ? "削除中..." : `選択した${selectedIds.size}件をゴミ箱へ`}
+                </button>
+              )}
+              <div className="text-sm text-gray-500">
+                {filteredAndSortedArticles.length}件 / 全{articles.length}件
+              </div>
             </div>
           </div>
 
@@ -152,14 +216,25 @@ export default function ArticlesListPage() {
               <table className="min-w-full bg-white border border-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === filteredAndSortedArticles.length && filteredAndSortedArticles.length > 0}
+                        onChange={handleSelectAll}
+                        className="cursor-pointer w-4 h-4"
+                      />
+                    </th>
                     <th
                       onClick={() => handleSort("title")}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
                     >
                       タイトル {getSortIcon("title")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      メモ
+                    <th
+                      onClick={() => handleSort("memo")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                    >
+                      メモ {getSortIcon("memo")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       タグ
@@ -182,20 +257,39 @@ export default function ArticlesListPage() {
                   {filteredAndSortedArticles.map((article) => (
                     <tr
                       key={article.id}
-                      onClick={() => router.push(`/articles/${article.id}`)}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(article.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleCheckboxChange(article.id);
+                          }}
+                          className="cursor-pointer w-4 h-4"
+                        />
+                      </td>
+                      <td
+                        className="px-6 py-4 cursor-pointer"
+                        onClick={() => router.push(`/articles/${article.id}`)}
+                      >
                         <div className="text-sm font-medium text-blue-600 hover:text-blue-800">
                           {article.title}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td
+                        className="px-6 py-4 cursor-pointer"
+                        onClick={() => router.push(`/articles/${article.id}`)}
+                      >
                         <div className="text-sm text-gray-500 truncate max-w-xs">
                           {article.memo || "-"}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td
+                        className="px-6 py-4 cursor-pointer"
+                        onClick={() => router.push(`/articles/${article.id}`)}
+                      >
                         <div className="flex gap-1 flex-wrap">
                           {article.tags?.map((tag) => (
                             <span
@@ -207,7 +301,10 @@ export default function ArticlesListPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                        onClick={() => router.push(`/articles/${article.id}`)}
+                      >
                         <div className="text-sm text-gray-900">
                           {new Date(article.created_at).toLocaleDateString(
                             "ja-JP",
@@ -221,7 +318,10 @@ export default function ArticlesListPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                        onClick={() => router.push(`/articles/${article.id}`)}
+                      >
                         <div className="text-sm text-gray-900">
                           {new Date(article.updated_at).toLocaleDateString(
                             "ja-JP",

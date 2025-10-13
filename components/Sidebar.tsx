@@ -5,7 +5,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Article } from "@/lib/db/types";
 
-export default function Sidebar() {
+interface SidebarProps {
+  onTagSelect?: (tagId: number | null) => void;
+  selectedTagId?: number | null;
+}
+
+export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTagId }: SidebarProps = {}) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
@@ -24,6 +29,9 @@ export default function Sidebar() {
     }
   };
 
+  // 外部からタグが選択されている場合はそれを優先
+  const activeTagId = externalSelectedTagId !== undefined ? externalSelectedTagId : selectedTagId;
+
   const filteredArticles = articles.filter((article) => {
     // 検索クエリでフィルタ
     const matchesSearch =
@@ -32,11 +40,19 @@ export default function Sidebar() {
 
     // タグでフィルタ
     const matchesTag =
-      selectedTagId === null ||
-      (article.tags?.some((tag) => tag.id === selectedTagId) ?? false);
+      activeTagId === null ||
+      (article.tags?.some((tag) => tag.id === activeTagId) ?? false);
 
     return matchesSearch && matchesTag;
   });
+
+  const handleTagSelect = (tagId: number | null) => {
+    if (onTagSelect) {
+      onTagSelect(tagId);
+    } else {
+      setSelectedTagId(tagId);
+    }
+  };
 
   return (
     <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col">
@@ -89,9 +105,9 @@ export default function Sidebar() {
         <h3 className="text-sm font-semibold mb-2 text-gray-400">タグ</h3>
         <div className="space-y-1">
           <div
-            onClick={() => setSelectedTagId(null)}
+            onClick={() => handleTagSelect(null)}
             className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
-              selectedTagId === null
+              activeTagId === null
                 ? "bg-blue-600 text-white"
                 : "hover:bg-gray-800"
             }`}
@@ -106,9 +122,9 @@ export default function Sidebar() {
             .map((tag) => (
               <div
                 key={tag.id}
-                onClick={() => setSelectedTagId(tag.id)}
+                onClick={() => handleTagSelect(tag.id)}
                 className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
-                  selectedTagId === tag.id
+                  activeTagId === tag.id
                     ? "bg-blue-600 text-white"
                     : "hover:bg-gray-800"
                 }`}
