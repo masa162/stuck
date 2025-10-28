@@ -110,7 +110,14 @@ export default function Home() {
             <div className="text-gray-500">記事がありません</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200">
+              <table className="min-w-full bg-white border border-gray-200 table-fixed">
+                <colgroup>
+                  <col className="w-[35%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[15%]" />
+                </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
                     <th

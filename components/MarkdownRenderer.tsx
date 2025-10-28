@@ -44,6 +44,26 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           a: ({ node, ...props }) => (
             <a className="text-blue-600 hover:underline" {...props} />
           ),
+          table: ({ node, ...props }) => (
+            <div className="overflow-x-auto my-6">
+              <table className="min-w-full border-collapse border border-gray-300" {...props} />
+            </div>
+          ),
+          thead: ({ node, ...props }) => (
+            <thead className="bg-gray-100" {...props} />
+          ),
+          tbody: ({ node, ...props }) => (
+            <tbody {...props} />
+          ),
+          tr: ({ node, ...props }) => (
+            <tr className="border-b border-gray-300" {...props} />
+          ),
+          th: ({ node, ...props }) => (
+            <th className="border border-gray-300 px-4 py-2 text-left font-semibold" {...props} />
+          ),
+          td: ({ node, ...props }) => (
+            <td className="border border-gray-300 px-4 py-2" {...props} />
+          ),
         }}
       >
         {content}

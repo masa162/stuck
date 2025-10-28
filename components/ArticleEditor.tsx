@@ -61,7 +61,6 @@ export default function ArticleEditor({
 
       if (response.ok) {
         const data = await response.json() as { id: number } | { article: { id: number } };
-        alert("保存しました");
         const articleId = 'id' in data ? data.id : data.article.id;
         router.push(`/articles/${articleId}`);
       } else {

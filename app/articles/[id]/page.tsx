@@ -103,7 +103,24 @@ export default function ArticlePage() {
             <>
               <div className="mb-6">
                 <div className="flex justify-between items-start mb-4">
-                  <h1 className="text-3xl font-bold">{article.title}</h1>
+                  <div>
+                    <h1 className="text-3xl font-bold mb-2">{article.title}</h1>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>ID: {article.id}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(article.id.toString());
+                          const btn = event?.target as HTMLButtonElement;
+                          const originalText = btn.textContent;
+                          btn.textContent = "✓";
+                          setTimeout(() => { btn.textContent = originalText; }, 1000);
+                        }}
+                        className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs transition-colors"
+                      >
+                        コピー
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleExportMarkdown}
