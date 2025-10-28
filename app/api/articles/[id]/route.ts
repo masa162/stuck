@@ -46,7 +46,11 @@ export async function GET(
   } catch (error) {
     console.error("Error fetching article:", error);
     return NextResponse.json(
-      { error: "Failed to fetch article" },
+      {
+        error: "Failed to fetch article",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
