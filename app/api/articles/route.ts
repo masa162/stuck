@@ -1,40 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticles, createArticle, Env } from "@/lib/db/d1";
+import { ArticleStorage } from "@/lib/storage";
 
 export const runtime = 'edge';
 
-// GET /api/articles - 記事一覧取得
+// GET /api/articles - Get article list (metadata only, optimized)
 export async function GET(request: NextRequest) {
   try {
     const env = process.env as unknown as Env;
 
     if (!env.DB) {
-      // DBが利用できない場合はモックデータを返す
+      // Return mock data if DB is not available
       const mockArticles = [
         {
           id: 1,
-          title: "サンプル記事1",
-          content: "# サンプル記事1\n\nこれはサンプルの記事です。",
-          memo: "メモ1",
+          title: "Sample Article 1",
+          content_key: null,
+          content_size: null,
+          content_hash: null,
+          memo: "Memo 1",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           deleted_at: null,
-          tags: [{ id: 1, name: "サンプル", created_at: new Date().toISOString() }],
-        },
-        {
-          id: 2,
-          title: "サンプル記事2",
-          content: "# サンプル記事2\n\n## セクション1\n\nこれは2つ目のサンプルです。",
-          memo: "メモ2",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          deleted_at: null,
-          tags: [{ id: 2, name: "テスト", created_at: new Date().toISOString() }],
+          tags: [{ id: 1, name: "sample", created_at: new Date().toISOString() }],
         },
       ];
       return NextResponse.json({ articles: mockArticles });
     }
 
+    // Fetch metadata only (no content)
     const articles = await getArticles(env.DB);
     return NextResponse.json({ articles });
   } catch (error) {
@@ -46,7 +40,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/articles - 新規記事作成
+// POST /api/articles - Create new article with R2 storage
 export async function POST(request: NextRequest) {
   try {
     const env = process.env as unknown as Env;
@@ -60,12 +54,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!env.DB) {
-      // DBが利用できない場合はモックレスポンスを返す
+    if (!env.DB || !env.ARTICLES_BUCKET) {
+      // Return mock response if DB or R2 is not available
       const newArticle = {
         id: Date.now(),
         title,
-        content,
+        content_key: `articles/${Date.now()}.md`,
+        content_size: new TextEncoder().encode(content).byteLength,
+        content_hash: "mock-hash",
         memo: memo || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -75,8 +71,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ article: newArticle }, { status: 201 });
     }
 
-    const article = await createArticle(env.DB, { title, content, memo, tags });
-    return NextResponse.json({ article }, { status: 201 });
+    const storage = new ArticleStorage({ bucket: env.ARTICLES_BUCKET });
+    const articleId = await createArticle(env.DB, storage, { title, content, memo, tags });
+
+    return NextResponse.json({ id: articleId }, { status: 201 });
   } catch (error) {
     console.error("Error creating article:", error);
     return NextResponse.json(

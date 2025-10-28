@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticleById, updateArticle, deleteArticle, Env } from "@/lib/db/d1";
+import { ArticleStorage } from "@/lib/storage";
 
 export const runtime = 'edge';
 
-// GET /api/articles/:id - 記事詳細取得
+// GET /api/articles/:id - Get article detail with content from R2
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -13,22 +14,26 @@ export async function GET(
     const id = parseInt(idStr);
     const env = process.env as unknown as Env;
 
-    if (!env.DB) {
-      // DBが利用できない場合はモックデータを返す
+    if (!env.DB || !env.ARTICLES_BUCKET) {
+      // Return mock data if DB or R2 is not available
       const mockArticle = {
         id,
-        title: `サンプル記事${id}`,
-        content: `# サンプル記事${id}\n\n## セクション1\n\nこれはサンプルの記事内容です。\n\n## セクション2\n\n詳細な内容がここに入ります。`,
-        memo: `メモ${id}`,
+        title: `Sample Article ${id}`,
+        content: `# Sample Article ${id}\n\n## Section 1\n\nThis is sample content.\n\n## Section 2\n\nDetailed content goes here.`,
+        content_key: `articles/${id}.md`,
+        content_size: 100,
+        content_hash: "mock-hash",
+        memo: `Memo ${id}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         deleted_at: null,
-        tags: [{ id: 1, name: "サンプル", created_at: new Date().toISOString() }],
+        tags: [{ id: 1, name: "sample", created_at: new Date().toISOString() }],
       };
       return NextResponse.json({ article: mockArticle });
     }
 
-    const article = await getArticleById(env.DB, id);
+    const storage = new ArticleStorage({ bucket: env.ARTICLES_BUCKET });
+    const article = await getArticleById(env.DB, storage, id);
 
     if (!article) {
       return NextResponse.json(
@@ -47,7 +52,7 @@ export async function GET(
   }
 }
 
-// PUT /api/articles/:id - 記事更新
+// PUT /api/articles/:id - Update article with R2 storage
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -59,12 +64,15 @@ export async function PUT(
     const body = await request.json() as { title?: string; content?: string; memo?: string; tags?: string[] };
     const { title, content, memo, tags } = body;
 
-    if (!env.DB) {
-      // DBが利用できない場合はモックレスポンスを返す
+    if (!env.DB || !env.ARTICLES_BUCKET) {
+      // Return mock response if DB or R2 is not available
       const updatedArticle = {
         id,
-        title: title || `サンプル記事${id}`,
+        title: title || `Sample Article ${id}`,
         content: content || "",
+        content_key: `articles/${id}.md`,
+        content_size: content ? new TextEncoder().encode(content).byteLength : 0,
+        content_hash: "mock-hash",
         memo: memo || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -74,7 +82,8 @@ export async function PUT(
       return NextResponse.json({ article: updatedArticle });
     }
 
-    const article = await updateArticle(env.DB, id, { title, content, memo, tags });
+    const storage = new ArticleStorage({ bucket: env.ARTICLES_BUCKET });
+    const article = await updateArticle(env.DB, storage, id, { title, content, memo, tags });
 
     if (!article) {
       return NextResponse.json(
@@ -93,7 +102,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/articles/:id - 記事削除（ゴミ箱へ移動）
+// DELETE /api/articles/:id - Soft delete article (R2 content preserved)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -104,14 +113,21 @@ export async function DELETE(
     const env = process.env as unknown as Env;
 
     if (!env.DB) {
-      // DBが利用できない場合はモックレスポンスを返す
+      // Return mock response if DB is not available
       return NextResponse.json({
         success: true,
         message: `Article ${id} moved to trash`
       });
     }
 
-    await deleteArticle(env.DB, id);
+    const success = await deleteArticle(env.DB, id);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Article not found" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

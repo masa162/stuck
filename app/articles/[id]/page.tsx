@@ -142,7 +142,7 @@ export default function ArticlePage() {
                 </p>
               </div>
 
-              <MarkdownRenderer content={article.content} />
+              <MarkdownRenderer content={article.content || ''} />
             </>
           ) : (
             <div className="text-gray-500">記事が見つかりませんでした</div>
@@ -153,7 +153,7 @@ export default function ArticlePage() {
       {/* 右サイドバー（目次エリア） */}
       <aside className="w-64 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
         <h3 className="text-sm font-semibold mb-4 text-gray-700">目次</h3>
-        {article ? (
+        {article && article.content ? (
           <TableOfContents content={article.content} />
         ) : (
           <p className="text-sm text-gray-500">記事を表示すると目次が表示されます</p>

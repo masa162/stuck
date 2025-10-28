@@ -36,7 +36,7 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
     // 検索クエリでフィルタ
     const matchesSearch =
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.content.toLowerCase().includes(searchQuery.toLowerCase());
+      (article.content?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
     // タグでフィルタ
     const matchesTag =
