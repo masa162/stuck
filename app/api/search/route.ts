@@ -10,13 +10,9 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q") || "";
-    const tag = searchParams.get("tag") || "";
 
     const env = (process.env as any);
-    const articles = await searchArticles(env.DB, {
-      query,
-      tags: tag ? [tag] : undefined,
-    });
+    const articles = await searchArticles(env.DB, query);
 
     return NextResponse.json({ articles, query });
   } catch (error) {

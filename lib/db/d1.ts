@@ -369,6 +369,30 @@ export async function searchArticles(
 }
 
 /**
+ * Get all tags with article count
+ */
+export async function getAllTags(db: D1Database): Promise<Array<Tag & { article_count: number }>> {
+  const { results } = await db
+    .prepare(
+      `
+      SELECT
+        t.id,
+        t.name,
+        t.created_at,
+        COUNT(at.article_id) as article_count
+      FROM tags t
+      LEFT JOIN article_tags at ON t.id = at.tag_id
+      LEFT JOIN articles a ON at.article_id = a.id AND a.deleted_at IS NULL
+      GROUP BY t.id, t.name, t.created_at
+      ORDER BY article_count DESC, t.name ASC
+    `
+    )
+    .all();
+
+  return results as unknown as Array<Tag & { article_count: number }>;
+}
+
+/**
  * Helper: Update article tags
  */
 async function updateArticleTags(
