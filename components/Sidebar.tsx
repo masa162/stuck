@@ -93,6 +93,16 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
             記事一覧
           </button>
         </Link>
+        <Link href="/tags">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm mb-2">
+            タグ一覧
+          </button>
+        </Link>
+        <Link href="/search">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm mb-2">
+            検索
+          </button>
+        </Link>
         <Link href="/trash">
           <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm">
             ゴミ箱

@@ -8,6 +8,8 @@ import { Article } from "@/lib/db/types";
 type SortColumn = "title" | "created_at" | "updated_at" | "memo";
 type SortDirection = "asc" | "desc";
 
+const ITEMS_PER_PAGE = 20;
+
 export default function Home() {
   const router = useRouter();
   const [articles, setArticles] = useState<Article[]>([]);
@@ -15,6 +17,7 @@ export default function Home() {
   const [sortColumn, setSortColumn] = useState<SortColumn>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchArticles();
@@ -89,6 +92,23 @@ export default function Home() {
       self.findIndex((t) => t.id === tag.id) === index
     );
 
+  // ページネーション処理
+  const totalPages = Math.ceil(filteredAndSortedArticles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedArticles = filteredAndSortedArticles.slice(startIndex, endIndex);
+
+  // ページ変更時にトップへスクロール
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // タグ変更時にページをリセット
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedTagId, sortColumn, sortDirection]);
+
   return (
     <div className="flex h-screen">
       <Sidebar onTagSelect={setSelectedTagId} selectedTagId={selectedTagId} />
@@ -109,7 +129,8 @@ export default function Home() {
           ) : filteredAndSortedArticles.length === 0 ? (
             <div className="text-gray-500">記事がありません</div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-200 table-fixed">
                 <colgroup>
                   <col className="w-[40%]" />
@@ -150,7 +171,7 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredAndSortedArticles.map((article) => (
+                  {paginatedArticles.map((article) => (
                     <tr
                       key={article.id}
                       onClick={() => router.push(`/articles/${article.id}`)}
@@ -211,6 +232,68 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
+
+            {/* ページネーション */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-center items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  前へ
+                </button>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // 最初、最後、現在のページ周辺のみ表示
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 2 && page <= currentPage + 2);
+
+                    if (!showPage) {
+                      // 省略記号を表示（重複しないように）
+                      if (page === currentPage - 3 || page === currentPage + 3) {
+                        return (
+                          <span key={page} className="px-3 py-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-4 py-2 rounded transition-colors ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 hover:bg-gray-300"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  次へ
+                </button>
+
+                <div className="ml-4 text-sm text-gray-600">
+                  {currentPage} / {totalPages} ページ
+                </div>
+              </div>
+            )}
+          </>
           )}
         </div>
       </main>
