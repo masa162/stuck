@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { Article, Category } from "@/lib/db/types";
 
-type SortColumn = "title" | "created_at" | "updated_at" | "memo";
+type SortColumn = "title" | "created_at" | "updated_at" | "memo" | "category" | "tags";
 type SortDirection = "asc" | "desc";
 
 const ITEMS_PER_PAGE = 20;
@@ -101,6 +101,20 @@ export default function Home() {
           aValue = (a.memo || "").toLowerCase();
           bValue = (b.memo || "").toLowerCase();
           break;
+        case "category": {
+          const aCat = categories.find(c => c.id === a.category_id);
+          const bCat = categories.find(c => c.id === b.category_id);
+          aValue = (aCat?.name || "未分類").toLowerCase();
+          bValue = (bCat?.name || "未分類").toLowerCase();
+          break;
+        }
+        case "tags": {
+          const aTags = (a.tags || []).map(t => t.name).sort().join(",");
+          const bTags = (b.tags || []).map(t => t.name).sort().join(",");
+          aValue = aTags.toLowerCase();
+          bValue = bTags.toLowerCase();
+          break;
+        }
         case "created_at":
           aValue = new Date(a.created_at).getTime();
           bValue = new Date(b.created_at).getTime();
@@ -189,8 +203,6 @@ export default function Home() {
   return (
     <div className="flex h-screen">
       <Sidebar
-        onTagSelect={setSelectedTagId}
-        selectedTagId={selectedTagId}
         onCategorySelect={setSelectedCategoryId}
         selectedCategoryId={selectedCategoryId}
       />
@@ -261,8 +273,8 @@ export default function Home() {
               <table className="min-w-full bg-white border border-gray-200 table-fixed">
                 <colgroup>
                   <col className="w-[3%]" />
-                  <col className="w-[37%]" />
-                  <col className="w-[10%]" />
+                  <col className="w-[42%]" />
+                  <col className="w-[5%]" />
                   <col className="w-[10%]" />
                   <col className="w-[10%]" />
                   <col className="w-[15%]" />
@@ -290,11 +302,17 @@ export default function Home() {
                     >
                       メモ {getSortIcon("memo")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      カテゴリ
+                    <th
+                      onClick={() => handleSort("category")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                    >
+                      カテゴリ {getSortIcon("category")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      タグ
+                    <th
+                      onClick={() => handleSort("tags")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                    >
+                      タグ {getSortIcon("tags")}
                     </th>
                     <th
                       onClick={() => handleSort("created_at")}
