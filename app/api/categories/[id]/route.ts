@@ -7,11 +7,12 @@ export const runtime = 'edge';
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    const body = await request.json();
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
+    const body = await request.json() as { name: string; color?: string };
     const { name, color } = body;
 
     const env = (process.env as any);
@@ -37,10 +38,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
     const env = (process.env as any);
 
     // カテゴリを削除（CASCADE設定により子カテゴリも削除される）

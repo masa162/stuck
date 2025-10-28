@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as { name: string; parent_id?: number | null; color?: string };
     const { name, parent_id, color } = body;
 
     if (!name) {

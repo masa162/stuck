@@ -65,8 +65,8 @@ export async function PUT(
     const { id: idStr } = await params;
     const id = parseInt(idStr);
     const env = process.env as unknown as Env;
-    const body = await request.json() as { title?: string; content?: string; memo?: string; tags?: string[] };
-    const { title, content, memo, tags } = body;
+    const body = await request.json() as { title?: string; content?: string; memo?: string; tags?: string[]; category_id?: number | null };
+    const { title, content, memo, tags, category_id } = body;
 
     if (!env.DB || !env.ARTICLES_BUCKET) {
       // Return mock response if DB or R2 is not available
@@ -87,7 +87,7 @@ export async function PUT(
     }
 
     const storage = new ArticleStorage({ bucket: env.ARTICLES_BUCKET });
-    const article = await updateArticle(env.DB, storage, id, { title, content, memo, tags });
+    const article = await updateArticle(env.DB, storage, id, { title, content, memo, tags, category_id });
 
     if (!article) {
       return NextResponse.json(

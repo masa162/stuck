@@ -111,14 +111,14 @@ export async function getArticleById(
 export async function createArticle(
   db: D1Database,
   storage: ArticleStorage,
-  data: { title: string; content: string; memo?: string; tags?: string[] }
+  data: { title: string; content: string; memo?: string; tags?: string[]; category_id?: number | null }
 ): Promise<number> {
-  const { title, content, memo, tags } = data;
+  const { title, content, memo, tags, category_id } = data;
 
   // 1. Create temporary record in D1 to get ID
   const { meta } = await db
-    .prepare("INSERT INTO articles (title, memo) VALUES (?, ?)")
-    .bind(title, memo || null)
+    .prepare("INSERT INTO articles (title, memo, category_id) VALUES (?, ?, ?)")
+    .bind(title, memo || null, category_id || null)
     .run();
 
   const articleId = meta.last_row_id!;
@@ -153,9 +153,9 @@ export async function updateArticle(
   db: D1Database,
   storage: ArticleStorage,
   id: number,
-  data: { title?: string; content?: string; memo?: string; tags?: string[] }
+  data: { title?: string; content?: string; memo?: string; tags?: string[]; category_id?: number | null }
 ): Promise<Article | null> {
-  const { title, content, memo, tags } = data;
+  const { title, content, memo, tags, category_id } = data;
 
   // Check if article exists
   const existing = await db
@@ -182,7 +182,7 @@ export async function updateArticle(
   }
 
   // Update metadata
-  if (title !== undefined || memo !== undefined) {
+  if (title !== undefined || memo !== undefined || category_id !== undefined) {
     await db
       .prepare(
         `
@@ -190,11 +190,12 @@ export async function updateArticle(
         SET
           title = COALESCE(?, title),
           memo = COALESCE(?, memo),
+          category_id = ?,
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `
       )
-      .bind(title || null, memo || null, id)
+      .bind(title || null, memo || null, category_id !== undefined ? category_id : null, id)
       .run();
   }
 

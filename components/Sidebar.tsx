@@ -3,20 +3,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Article } from "@/lib/db/types";
+import { Article, Category } from "@/lib/db/types";
 
 interface SidebarProps {
   onTagSelect?: (tagId: number | null) => void;
   selectedTagId?: number | null;
+  onCategorySelect?: (categoryId: number | null) => void;
+  selectedCategoryId?: number | null;
 }
 
-export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTagId }: SidebarProps = {}) {
+export default function Sidebar({
+  onTagSelect,
+  selectedTagId: externalSelectedTagId,
+  onCategorySelect,
+  selectedCategoryId: externalSelectedCategoryId
+}: SidebarProps = {}) {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchArticles();
+    fetchCategories();
   }, []);
 
   const fetchArticles = async () => {
@@ -29,8 +39,19 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
     }
   };
 
-  // 外部からタグが選択されている場合はそれを優先
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      const data = await response.json() as { categories: Category[] };
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  // 外部から選択されている場合はそれを優先
   const activeTagId = externalSelectedTagId !== undefined ? externalSelectedTagId : selectedTagId;
+  const activeCategoryId = externalSelectedCategoryId !== undefined ? externalSelectedCategoryId : selectedCategoryId;
 
   const filteredArticles = articles.filter((article) => {
     // 検索クエリでフィルタ
@@ -43,7 +64,12 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
       activeTagId === null ||
       (article.tags?.some((tag) => tag.id === activeTagId) ?? false);
 
-    return matchesSearch && matchesTag;
+    // カテゴリでフィルタ
+    const matchesCategory =
+      activeCategoryId === null ||
+      article.category_id === activeCategoryId;
+
+    return matchesSearch && matchesTag && matchesCategory;
   });
 
   const handleTagSelect = (tagId: number | null) => {
@@ -51,6 +77,14 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
       onTagSelect(tagId);
     } else {
       setSelectedTagId(tagId);
+    }
+  };
+
+  const handleCategorySelect = (categoryId: number | null) => {
+    if (onCategorySelect) {
+      onCategorySelect(categoryId);
+    } else {
+      setSelectedCategoryId(categoryId);
     }
   };
 
@@ -108,6 +142,40 @@ export default function Sidebar({ onTagSelect, selectedTagId: externalSelectedTa
             ゴミ箱
           </button>
         </Link>
+      </div>
+
+      {/* カテゴリ一覧 */}
+      <div className="p-4 border-b border-gray-700">
+        <h3 className="text-sm font-semibold mb-2 text-gray-400">カテゴリ</h3>
+        <div className="space-y-1">
+          <div
+            onClick={() => handleCategorySelect(null)}
+            className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
+              activeCategoryId === null
+                ? "bg-blue-600 text-white"
+                : "hover:bg-gray-800"
+            }`}
+          >
+            すべて
+          </div>
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              onClick={() => handleCategorySelect(category.id)}
+              className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors flex items-center ${
+                activeCategoryId === category.id
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full mr-2"
+                style={{ backgroundColor: category.color }}
+              />
+              {category.name}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* タグ一覧 */}

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Category } from "@/lib/db/types";
 
 interface ArticleEditorProps {
   initialTitle?: string;
   initialContent?: string;
   initialMemo?: string;
   initialTags?: string[];
+  initialCategoryId?: number | null;
   articleId?: number;
   isNew?: boolean;
 }
@@ -17,6 +19,7 @@ export default function ArticleEditor({
   initialContent = "",
   initialMemo = "",
   initialTags = [],
+  initialCategoryId = null,
   articleId,
   isNew = false,
 }: ArticleEditorProps) {
@@ -25,7 +28,23 @@ export default function ArticleEditor({
   const [content, setContent] = useState(initialContent);
   const [memo, setMemo] = useState(initialMemo);
   const [tags, setTags] = useState(initialTags.join(", "));
+  const [categoryId, setCategoryId] = useState<number | null>(initialCategoryId);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      const data = await response.json() as { categories: Category[] };
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
 
   const handleSave = async () => {
     if (!title || !content) {
@@ -46,6 +65,7 @@ export default function ArticleEditor({
         content,
         memo,
         tags: tagArray,
+        category_id: categoryId,
       };
 
       const url = isNew ? "/api/articles" : `/api/articles/${articleId}`;
@@ -100,6 +120,22 @@ export default function ArticleEditor({
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
             placeholder="記事のタイトル"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">カテゴリ</label>
+          <select
+            value={categoryId || ""}
+            onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value) : null)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+          >
+            <option value="">未分類</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

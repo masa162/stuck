@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const env = process.env as unknown as Env;
-    const body = await request.json() as { title: string; content: string; memo?: string; tags?: string[] };
-    const { title, content, memo, tags } = body;
+    const body = await request.json() as { title: string; content: string; memo?: string; tags?: string[]; category_id?: number | null };
+    const { title, content, memo, tags, category_id } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const storage = new ArticleStorage({ bucket: env.ARTICLES_BUCKET });
-    const articleId = await createArticle(env.DB, storage, { title, content, memo, tags });
+    const articleId = await createArticle(env.DB, storage, { title, content, memo, tags, category_id });
 
     return NextResponse.json({ id: articleId }, { status: 201 });
   } catch (error) {

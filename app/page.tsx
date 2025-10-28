@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
-import { Article } from "@/lib/db/types";
+import { Article, Category } from "@/lib/db/types";
 
 type SortColumn = "title" | "created_at" | "updated_at" | "memo";
 type SortDirection = "asc" | "desc";
@@ -13,14 +13,17 @@ const ITEMS_PER_PAGE = 20;
 export default function Home() {
   const router = useRouter();
   const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortColumn, setSortColumn] = useState<SortColumn>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchArticles();
+    fetchCategories();
   }, []);
 
   const fetchArticles = async () => {
@@ -32,6 +35,16 @@ export default function Home() {
       console.error("Failed to fetch articles:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories");
+      const data = await response.json() as { categories: Category[] };
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
     }
   };
 
@@ -49,11 +62,12 @@ export default function Home() {
     return sortDirection === "asc" ? "↑" : "↓";
   };
 
-  // タグによるフィルタリングとソート
+  // タグとカテゴリによるフィルタリングとソート
   const filteredAndSortedArticles = articles
     .filter((article) => {
-      if (selectedTagId === null) return true;
-      return article.tags?.some((tag) => tag.id === selectedTagId) ?? false;
+      const matchesTag = selectedTagId === null || (article.tags?.some((tag) => tag.id === selectedTagId) ?? false);
+      const matchesCategory = selectedCategoryId === null || article.category_id === selectedCategoryId;
+      return matchesTag && matchesCategory;
     })
     .sort((a, b) => {
       let aValue: string | number;
@@ -104,14 +118,19 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // タグ変更時にページをリセット
+  // タグ・カテゴリ変更時にページをリセット
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTagId, sortColumn, sortDirection]);
+  }, [selectedTagId, selectedCategoryId, sortColumn, sortDirection]);
 
   return (
     <div className="flex h-screen">
-      <Sidebar onTagSelect={setSelectedTagId} selectedTagId={selectedTagId} />
+      <Sidebar
+        onTagSelect={setSelectedTagId}
+        selectedTagId={selectedTagId}
+        onCategorySelect={setSelectedCategoryId}
+        selectedCategoryId={selectedCategoryId}
+      />
 
       {/* メインコンテンツエリア */}
       <main className="flex-1 bg-white overflow-y-auto">
@@ -133,9 +152,10 @@ export default function Home() {
               <div className="overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-200 table-fixed">
                 <colgroup>
-                  <col className="w-[40%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[15%]" />
+                  <col className="w-[35%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[13%]" />
                   <col className="w-[15%]" />
                   <col className="w-[15%]" />
                 </colgroup>
@@ -152,6 +172,9 @@ export default function Home() {
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
                     >
                       メモ {getSortIcon("memo")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      カテゴリ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       タグ
@@ -186,6 +209,27 @@ export default function Home() {
                         <div className="text-sm text-gray-500 truncate max-w-xs">
                           {article.memo || "-"}
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {article.category_id ? (
+                          (() => {
+                            const category = categories.find(c => c.id === article.category_id);
+                            return category ? (
+                              <span
+                                className="inline-flex items-center px-2 py-1 text-xs rounded"
+                                style={{ backgroundColor: category.color + '20', color: category.color }}
+                              >
+                                <span
+                                  className="inline-block w-2 h-2 rounded-full mr-1"
+                                  style={{ backgroundColor: category.color }}
+                                />
+                                {category.name}
+                              </span>
+                            ) : null;
+                          })()
+                        ) : (
+                          <span className="text-xs text-gray-400">未分類</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-1 flex-wrap">
