@@ -65,7 +65,7 @@ export default function ArticleEditor({
         const articleId = 'id' in data ? data.id : data.article.id;
         router.push(`/articles/${articleId}`);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as { error?: string; details?: string };
         console.error("Save failed:", errorData);
         alert(`保存に失敗しました: ${errorData.details || errorData.error || '不明なエラー'}`);
       }
