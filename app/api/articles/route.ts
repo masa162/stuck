@@ -78,7 +78,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error creating article:", error);
     return NextResponse.json(
-      { error: "Failed to create article" },
+      {
+        error: "Failed to create article",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

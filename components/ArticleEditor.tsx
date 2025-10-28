@@ -60,15 +60,18 @@ export default function ArticleEditor({
       });
 
       if (response.ok) {
-        const data = await response.json() as { article: { id: number } };
+        const data = await response.json() as { id: number } | { article: { id: number } };
         alert("保存しました");
-        router.push(`/articles/${data.article.id}`);
+        const articleId = 'id' in data ? data.id : data.article.id;
+        router.push(`/articles/${articleId}`);
       } else {
-        alert("保存に失敗しました");
+        const errorData = await response.json();
+        console.error("Save failed:", errorData);
+        alert(`保存に失敗しました: ${errorData.details || errorData.error || '不明なエラー'}`);
       }
     } catch (error) {
       console.error("Save error:", error);
-      alert("保存に失敗しました");
+      alert(`保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     } finally {
       setSaving(false);
     }
