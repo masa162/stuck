@@ -20,6 +20,10 @@ export default function Home() {
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchArticles();
@@ -62,11 +66,26 @@ export default function Home() {
     return sortDirection === "asc" ? "↑" : "↓";
   };
 
-  // タグとカテゴリによるフィルタリングとソート
+  // タグ・カテゴリ・日付によるフィルタリングとソート
   const filteredAndSortedArticles = articles
     .filter((article) => {
       const matchesTag = selectedTagId === null || (article.tags?.some((tag) => tag.id === selectedTagId) ?? false);
       const matchesCategory = selectedCategoryId === null || article.category_id === selectedCategoryId;
+
+      // 日付フィルタ
+      if (dateFrom || dateTo) {
+        const createdDate = new Date(article.created_at);
+        const from = dateFrom ? new Date(dateFrom) : null;
+        const to = dateTo ? new Date(dateTo) : null;
+
+        if (from && createdDate < from) return false;
+        if (to) {
+          const toEnd = new Date(to);
+          toEnd.setHours(23, 59, 59, 999);
+          if (createdDate > toEnd) return false;
+        }
+      }
+
       return matchesTag && matchesCategory;
     })
     .sort((a, b) => {
@@ -118,10 +137,54 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // タグ・カテゴリ変更時にページをリセット
+  // タグ・カテゴリ・日付変更時にページをリセット
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTagId, selectedCategoryId, sortColumn, sortDirection]);
+  }, [selectedTagId, selectedCategoryId, dateFrom, dateTo, sortColumn, sortDirection]);
+
+  // チェックボックス選択ハンドラー
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(new Set(paginatedArticles.map(a => a.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: number, checked: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 一括削除
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`選択した${selectedIds.size}件の記事をゴミ箱に移動しますか？`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id =>
+          fetch(`/api/trash/${id}`, { method: 'PUT' })
+        )
+      );
+      setSelectedIds(new Set());
+      await fetchArticles(); // 記事リストを再取得
+    } catch (error) {
+      console.error("Failed to delete articles:", error);
+      alert("削除に失敗しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="flex h-screen">
@@ -139,8 +202,53 @@ export default function Home() {
             <h1 className="text-3xl font-bold">記事一覧</h1>
             <div className="text-sm text-gray-500">
               {filteredAndSortedArticles.length}件
-              {selectedTagId !== null && ` / 全${articles.length}件`}
+              {(selectedTagId !== null || selectedCategoryId !== null || dateFrom || dateTo) && ` / 全${articles.length}件`}
             </div>
+          </div>
+
+          {/* 日付フィルタと一括削除 */}
+          <div className="mb-4 flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-700 font-medium">
+                投稿日時:
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="開始日"
+              />
+              <span className="text-gray-500">〜</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="終了日"
+              />
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+                >
+                  クリア
+                </button>
+              )}
+            </div>
+
+            {selectedIds.size > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm ml-auto"
+              >
+                {deleting ? "削除中..." : `選択した${selectedIds.size}件をゴミ箱へ`}
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -152,7 +260,8 @@ export default function Home() {
               <div className="overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-200 table-fixed">
                 <colgroup>
-                  <col className="w-[40%]" />
+                  <col className="w-[3%]" />
+                  <col className="w-[37%]" />
                   <col className="w-[10%]" />
                   <col className="w-[10%]" />
                   <col className="w-[10%]" />
@@ -161,6 +270,14 @@ export default function Home() {
                 </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === paginatedArticles.length && paginatedArticles.length > 0}
+                        onChange={handleSelectAll}
+                        className="cursor-pointer w-4 h-4"
+                      />
+                    </th>
                     <th
                       onClick={() => handleSort("title")}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
@@ -197,10 +314,17 @@ export default function Home() {
                   {paginatedArticles.map((article) => (
                     <tr
                       key={article.id}
-                      onClick={() => router.push(`/articles/${article.id}`)}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(article.id)}
+                          onChange={(e) => handleSelectOne(article.id, e.target.checked)}
+                          className="cursor-pointer w-4 h-4"
+                        />
+                      </td>
+                      <td className="px-6 py-4 cursor-pointer" onClick={() => router.push(`/articles/${article.id}`)}>
                         <div className="text-sm font-medium text-blue-600 hover:text-blue-800">
                           {article.title}
                         </div>
