@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Sidebar from "@/components/Sidebar";
 import { Category } from "@/lib/db/types";
 
 interface CategoryWithCount extends Category {
@@ -225,17 +226,20 @@ export default function AdminCategoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6">
+    <div className="flex h-screen">
+      <Sidebar />
+
+      <main className="flex-1 bg-gray-50 overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-800">カテゴリ管理</h1>
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/admin")}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
             >
-              ← TOPに戻る
+              ← 管理画面に戻る
             </button>
           </div>
           <button
@@ -312,7 +316,8 @@ export default function AdminCategoriesPage() {
             rootCategories.map(category => renderCategoryRow(category))
           )}
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

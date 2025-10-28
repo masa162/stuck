@@ -76,8 +76,13 @@ export default function Sidebar({
           </button>
         </Link>
         <Link href="/trash">
-          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm mb-2">
             ゴミ箱
+          </button>
+        </Link>
+        <Link href="/admin">
+          <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium transition-colors text-sm">
+            管理画面
           </button>
         </Link>
       </div>
