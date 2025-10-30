@@ -504,13 +504,6 @@ export default function Home() {
           </>
           )}
         </div>
-        {/* モバイル: TOPへ戻る */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="md:hidden fixed bottom-4 right-4 px-4 py-2 rounded-full shadow bg-blue-600 text-white z-20"
-        >
-          TOP
-        </button>
       </main>
 
       {/* モバイル用ドロワー */}

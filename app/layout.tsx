@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ScrollTop from "@/components/ScrollTop";
 
 export const metadata: Metadata = {
   title: "stuck - AI Knowledge Hub",
@@ -16,7 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        {children}
+        <ScrollTop />
+      </body>
     </html>
   );
 }
