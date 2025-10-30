@@ -49,13 +49,32 @@ function SearchContent() {
     }
   };
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen">
-      <Sidebar />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
       {/* メインコンテンツエリア */}
       <main className="flex-1 bg-white overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-8">
+        {/* モバイルヘッダー */}
+        <div className="md:hidden sticky top-0 z-20 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              aria-label="メニュー"
+              className="p-2 rounded border border-gray-300"
+              onClick={() => setMobileSidebarOpen(true)}
+            >
+              ☰
+            </button>
+            <h1 className="text-lg font-semibold">記事を検索</h1>
+            <div className="w-8" />
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
           <h1 className="text-3xl font-bold mb-6">記事を検索</h1>
 
           {/* 検索フォーム */}
@@ -136,6 +155,19 @@ function SearchContent() {
           )}
         </div>
       </main>
+
+      {/* モバイル用ドロワー */}
+      {mobileSidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-30">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[80%] bg-gray-900 shadow-xl">
+            <Sidebar />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -144,9 +176,18 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="flex h-screen">
-        <Sidebar />
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
         <main className="flex-1 bg-white overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-8">
+          <div className="md:hidden sticky top-0 z-20 bg-white border-b border-gray-200">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="p-2 rounded border border-transparent">☰</div>
+              <h1 className="text-lg font-semibold">読み込み中...</h1>
+              <div className="w-8" />
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto p-4 md:p-8">
             <div className="text-gray-500">読み込み中...</div>
           </div>
         </main>
