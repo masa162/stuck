@@ -2,6 +2,7 @@
 
 import Sidebar from "@/components/Sidebar";
 import ArticleEditor from "@/components/ArticleEditor";
+import { useState } from "react";
 
 export default function NewArticlePage() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
