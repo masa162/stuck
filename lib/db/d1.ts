@@ -17,6 +17,7 @@ export async function getArticles(db: D1Database): Promise<ArticleMetadata[]> {
       `
       SELECT
         id, title, content_key, content_size, content_hash, memo,
+        category_id,
         created_at, updated_at, deleted_at
       FROM articles
       WHERE deleted_at IS NULL
@@ -190,12 +191,12 @@ export async function updateArticle(
         SET
           title = COALESCE(?, title),
           memo = COALESCE(?, memo),
-          category_id = ?,
+          category_id = COALESCE(?, category_id),
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `
       )
-      .bind(title || null, memo || null, category_id !== undefined ? category_id : null, id)
+      .bind(title || null, memo || null, category_id ?? null, id)
       .run();
   }
 

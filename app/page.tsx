@@ -199,16 +199,39 @@ export default function Home() {
     }
   };
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen">
-      <Sidebar
-        onCategorySelect={setSelectedCategoryId}
-        selectedCategoryId={selectedCategoryId}
-      />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar
+          onCategorySelect={setSelectedCategoryId}
+          selectedCategoryId={selectedCategoryId}
+          tags={allTags}
+          selectedTagId={selectedTagId}
+          onTagSelect={setSelectedTagId}
+        />
+      </div>
 
       {/* メインコンテンツエリア */}
       <main className="flex-1 bg-white overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-8">
+        {/* モバイルヘッダー */}
+        <div className="md:hidden sticky top-0 z-20 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              aria-label="メニュー"
+              className="p-2 rounded border border-gray-300"
+              onClick={() => setMobileSidebarOpen(true)}
+            >
+              ☰
+            </button>
+            <h1 className="text-lg font-semibold">記事一覧</h1>
+            <div className="w-8" />
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">記事一覧</h1>
             <div className="text-sm text-gray-500">
@@ -481,42 +504,33 @@ export default function Home() {
           </>
           )}
         </div>
+        {/* モバイル: TOPへ戻る */}
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="md:hidden fixed bottom-4 right-4 px-4 py-2 rounded-full shadow bg-blue-600 text-white z-20"
+        >
+          TOP
+        </button>
       </main>
 
-      {/* 右サイドバー（タグ一覧エリア） */}
-      <aside className="w-64 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">タグで絞り込み</h3>
-        <div className="space-y-1">
+      {/* モバイル用ドロワー */}
+      {mobileSidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-30">
           <div
-            onClick={() => setSelectedTagId(null)}
-            className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
-              selectedTagId === null
-                ? "bg-blue-600 text-white"
-                : "bg-white hover:bg-gray-100 border border-gray-300"
-            }`}
-          >
-            すべて ({articles.length})
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[80%] bg-gray-900 shadow-xl">
+            <Sidebar
+              onCategorySelect={(id) => { setSelectedCategoryId(id); setMobileSidebarOpen(false); }}
+              selectedCategoryId={selectedCategoryId}
+              tags={allTags}
+              selectedTagId={selectedTagId}
+              onTagSelect={(id) => { setSelectedTagId(id); setMobileSidebarOpen(false); }}
+            />
           </div>
-          {allTags.map((tag) => {
-            const count = articles.filter((a) =>
-              a.tags?.some((t) => t.id === tag.id)
-            ).length;
-            return (
-              <div
-                key={tag.id}
-                onClick={() => setSelectedTagId(tag.id)}
-                className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
-                  selectedTagId === tag.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-white hover:bg-gray-100 border border-gray-300"
-                }`}
-              >
-                {tag.name} ({count})
-              </div>
-            );
-          })}
         </div>
-      </aside>
+      )}
     </div>
   );
 }

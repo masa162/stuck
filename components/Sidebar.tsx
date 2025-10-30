@@ -3,16 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Category } from "@/lib/db/types";
+import { Category, Tag } from "@/lib/db/types";
 
 interface SidebarProps {
   onCategorySelect?: (categoryId: number | null) => void;
   selectedCategoryId?: number | null;
+  // タグ絞り込み（任意）
+  tags?: Tag[];
+  selectedTagId?: number | null;
+  onTagSelect?: (tagId: number | null) => void;
 }
 
 export default function Sidebar({
   onCategorySelect,
-  selectedCategoryId: externalSelectedCategoryId
+  selectedCategoryId: externalSelectedCategoryId,
+  tags = [],
+  selectedTagId,
+  onTagSelect
 }: SidebarProps = {}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -39,6 +46,12 @@ export default function Sidebar({
       onCategorySelect(categoryId);
     } else {
       setSelectedCategoryId(categoryId);
+    }
+  };
+
+  const handleTagSelect = (tagId: number | null) => {
+    if (onTagSelect) {
+      onTagSelect(tagId);
     }
   };
 
@@ -120,7 +133,35 @@ export default function Sidebar({
           ))}
         </div>
       </div>
-
+      {/* タグで絞り込み */}
+      <div className="p-4 border-b border-gray-700">
+        <h3 className="text-sm font-semibold mb-2 text-gray-400">タグで絞り込み</h3>
+        <div className="space-y-1">
+          <div
+            onClick={() => handleTagSelect(null)}
+            className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
+              selectedTagId === null
+                ? "bg-blue-600 text-white"
+                : "hover:bg-gray-800"
+            }`}
+          >
+            すべて
+          </div>
+          {tags.map((tag) => (
+            <div
+              key={tag.id}
+              onClick={() => handleTagSelect(tag.id)}
+              className={`text-sm px-2 py-1 rounded cursor-pointer transition-colors ${
+                selectedTagId === tag.id
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              {tag.name}
+            </div>
+          ))}
+        </div>
+      </div>
     </aside>
   );
 }
