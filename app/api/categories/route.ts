@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Category } from "@/lib/db/types";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -8,7 +9,7 @@ export const runtime = 'edge';
  */
 export async function GET(request: NextRequest) {
   try {
-    const env = (process.env as any);
+    const env = getRequestContext().env;
     const { results } = await env.DB.prepare(
       `SELECT id, name, parent_id, color, display_order, created_at, updated_at
        FROM categories
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const env = (process.env as any);
+    const env = getRequestContext().env;
 
     // 最大のdisplay_orderを取得
     const { results: orderResults } = await env.DB.prepare(

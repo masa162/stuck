@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllTags } from "@/lib/db/d1";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -8,7 +9,7 @@ export const runtime = 'edge';
  */
 export async function GET(request: NextRequest) {
   try {
-    const env = (process.env as any);
+    const env = getRequestContext().env;
     const tags = await getAllTags(env.DB);
 
     return NextResponse.json({ tags });

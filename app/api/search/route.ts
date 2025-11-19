@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchArticles } from "@/lib/db/d1";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q") || "";
 
-    const env = (process.env as any);
+    const env = getRequestContext().env;
     const articles = await searchArticles(env.DB, query);
 
     return NextResponse.json({ articles, query });

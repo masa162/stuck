@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticles, createArticle, Env } from "@/lib/db/d1";
 import { ArticleStorage } from "@/lib/storage";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
 // GET /api/articles - Get article list (metadata only, optimized)
 export async function GET(request: NextRequest) {
   try {
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
 
     if (!env.DB) {
       // Return mock data if DB is not available
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
 // POST /api/articles - Create new article with R2 storage
 export async function POST(request: NextRequest) {
   try {
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
     const body = await request.json() as { title: string; content: string; memo?: string; tags?: string[]; category_id?: number | null };
     const { title, content, memo, tags, category_id } = body;
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -15,7 +16,7 @@ export async function PUT(
     const body = await request.json() as { name: string; color?: string };
     const { name, color } = body;
 
-    const env = (process.env as any);
+    const env = getRequestContext().env;
 
     await env.DB.prepare(
       `UPDATE categories
@@ -43,7 +44,7 @@ export async function DELETE(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const env = (process.env as any);
+    const env = getRequestContext().env;
 
     // カテゴリを削除（CASCADE設定により子カテゴリも削除される）
     // 記事のcategory_idはSET NULLされる

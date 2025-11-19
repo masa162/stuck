@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticleById, updateArticle, deleteArticle, Env } from "@/lib/db/d1";
 import { ArticleStorage } from "@/lib/storage";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -12,7 +13,7 @@ export async function GET(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
 
     if (!env.DB || !env.ARTICLES_BUCKET) {
       // Return mock data if DB or R2 is not available
@@ -64,7 +65,7 @@ export async function PUT(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
     const body = await request.json() as { title?: string; content?: string; memo?: string; tags?: string[]; category_id?: number | null };
     const { title, content, memo, tags, category_id } = body;
 
@@ -114,7 +115,7 @@ export async function DELETE(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
 
     if (!env.DB) {
       // Return mock response if DB is not available

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { restoreArticle, Env } from "@/lib/db/d1";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -11,7 +12,7 @@ export async function POST(
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const env = process.env as unknown as Env;
+    const env = getRequestContext().env as Env;
 
     if (!env.DB) {
       return NextResponse.json(

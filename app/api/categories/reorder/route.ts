@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages/next-dev";
 
 export const runtime = 'edge';
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const env = (process.env as any);
+    const env = getRequestContext().env;
 
     // 各カテゴリのdisplay_orderを更新
     for (let i = 0; i < categoryIds.length; i++) {
